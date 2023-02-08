@@ -1,0 +1,46 @@
+<style>
+  .dropdown {
+    position: relative;
+    display: inline-block;
+  }
+
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    padding: 12px 16px;
+    z-index: 1;
+  }
+
+  .dropdown:hover .dropdown-content {
+    display: block;
+  }
+</style>
+
+<div class="dropdown">
+  <span>Notifications</span>
+  <p id="counter">{{notifications.count}}</p>
+  <div class="dropdown-content">
+    {% for i in notifications%}
+    <p>{{i.text}}</p>
+    {% endfor %}
+  </div>
+</div>
+
+<script>
+  let url = `ws://${window.location.host}/ws/notification/`;
+  let notificationSocket = new WebSocket(url);
+  let notificationBell = document.querySelector(".dropdown");
+  notificationSocket.onmessage = function (e) {
+    let data = JSON.parse(e.data);
+    console.log(data);
+    let notificationDropdown = document.querySelector(".dropdown-content");
+    let elm = `<p>${data.notification}</p>`;
+    notificationDropdown.insertAdjacentHTML("afterbegin", elm);
+    let count = document.querySelector("#counter");
+    let newCount = parseInt(count.innerHTML) + 1;
+    count.innerHTML = newCount;
+  };
+</script>
