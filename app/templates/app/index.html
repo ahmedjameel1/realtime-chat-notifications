@@ -20,17 +20,27 @@
 </style>
 
 <div class="dropdown">
-  <span>Notifications</span>
+  {% if request.user.is_authenticated %}
+  <span>Notifications for {{request.user.username}}</span>
+  {% else %}
+  <span>Notifications logged out</span>
+  {% endif %} {% if request.user.is_authenticated != True%}
+  <p id="counter">Login to see notification</p>
+  {% else %}
   <p id="counter">{{notifications.count}}</p>
   <div class="dropdown-content">
     {% for i in notifications%}
     <p>{{i.text}}</p>
     {% endfor %}
   </div>
+  {% endif %}
 </div>
-
+{{ request.user.username|json_script:"user_username" }}
 <script>
-  let url = `ws://${window.location.host}/ws/notification/`;
+  let user_username = JSON.parse(
+    document.getElementById("user_username").textContent
+  );
+  let url = `ws://${window.location.host}/ws/notification/${user_username}/`;
   let notificationSocket = new WebSocket(url);
   let notificationBell = document.querySelector(".dropdown");
   notificationSocket.onmessage = function (e) {

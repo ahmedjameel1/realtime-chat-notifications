@@ -5,9 +5,12 @@ from .models import Notification
 
 
 def index(request):
-    notifications = Notification.objects.all()
+    try:
+        notifications = Notification.objects.filter(user=request.user)
+    except:
+        notifications = None
+    username = request.user.username
     ctx = {
-        'notifications': notifications,
-
+        'notifications': notifications, 'username': username
     }
     return render(request, 'app/index.html', ctx)
