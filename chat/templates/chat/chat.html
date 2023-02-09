@@ -1,0 +1,158 @@
+<div>
+<h3>chatting with {{chat_room.owner.username}}</h3>
+  <h2>Start another chat</h2>
+  {% for i in users%}
+  <a href="{% url 'private-chat' i.username%}">{{i.username}}</a> {% endfor %}
+</div>
+<div>
+<div class="chat">
+  {% for i in messages %} {% if i.sender == request.user %}
+  <div class="msg sent">{{i.body}}</div>
+  {%else%}
+  <div class="msg rcvd">{{i.body}}</div>
+  {%endif%} {%endfor%}
+</div>
+<div style="display: flex;
+justify-content: center;
+align-items: center;">
+  <form method="POST" id="messageForm">
+    {% csrf_token %}
+    <input name="body" id="msgContent" />
+    <button type="submit" id="submitBtn" class="btn btn-primary">Send</button>
+  </form>
+</div>
+
+    <style>
+      /* QuickReset */
+      * {
+        margin: 0;
+        box-sizing: border-box;
+      }
+
+      .chat {
+        --rad: 20px;
+        --rad-sm: 3px;
+        font: 16px/1.5 sans-serif;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+        max-width: 500px;
+        margin: auto;
+      }
+
+      .msg {
+        position: relative;
+        max-width: 75%;
+        padding: 7px 15px;
+        margin-bottom: 2px;
+      }
+
+      .msg.sent {
+        border-radius: var(--rad) var(--rad-sm) var(--rad-sm) var(--rad);
+        background: #42a5f5;
+        color: #fff;
+        /* moves it to the right */
+        margin-left: auto;
+      }
+
+      .msg.rcvd {
+        border-radius: var(--rad-sm) var(--rad) var(--rad) var(--rad-sm);
+        background: #f1f1f1;
+        color: #555;
+        /* moves it to the left */
+        margin-right: auto;
+      }
+
+      /* Improve radius for messages group */
+
+      .msg.sent:first-child,
+      .msg.rcvd + .msg.sent {
+        border-top-right-radius: var(--rad);
+      }
+
+      .msg.rcvd:first-child,
+      .msg.sent + .msg.rcvd {
+        border-top-left-radius: var(--rad);
+      }
+
+      /* time */
+
+      .msg::before {
+        content: attr(data-time);
+        font-size: 0.8rem;
+        position: absolute;
+        bottom: 100%;
+        color: #888;
+        white-space: nowrap;
+        /* Hidden by default */
+        display: none;
+      }
+
+      .msg.sent::before {
+        right: 15px;
+      }
+
+      .msg.rcvd::before {
+        left: 15px;
+      }
+
+      /* Show time only for first message in group */
+
+      .msg:first-child::before,
+      .msg.sent + .msg.rcvd::before,
+      .msg.rcvd + .msg.sent::before {
+        /* Show only for first message in group */
+        display: block;
+      }
+    </style>
+    {{ chat_room.slug|json_script:'chat_slug' }} 
+    {{char_room.owner.username|json_script:'recipient'}} 
+    {{request.user.username|json_script:'sender'}}
+
+    <script>
+      let chat_slug = JSON.parse(
+        document.getElementById("chat_slug").textContent
+      );
+      let url = `ws://${window.location.host}/ws/chat/${chat_slug}/`;
+      let chatSocket = new WebSocket(url);
+
+      chatSocket.onmessage = function (e) {
+        console.log(e.data);
+        let data = JSON.parse(e.data);
+        let box = document.querySelector(".chat");
+        if (data.message && data.sender == JSON.parse(
+          document.getElementById("sender").textContent)) {
+          let elm = document.createElement("div");
+          elm.classList.add('msg', 'sent')
+          elm.innerHTML = data.message
+          box.append(elm);
+        }
+        else {let elm = document.createElement("div");
+        elm.classList.add('msg', 'rcvd')
+        elm.innerHTML = data.message
+        console.log(elm)
+        box.append(elm);
+      }
+        
+      };
+
+      const messageForm = document.querySelector("#messageForm");
+      messageForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const formProps = Object.fromEntries(formData);
+        const newData = new FormData();
+        newData.append("body", formProps.body);
+        newData.append("csrfmiddlewaretoken", formProps.csrfmiddlewaretoken);
+        const sendMessage = new XMLHttpRequest();
+        sendMessage.open("POST", "", false);
+        sendMessage.send(newData);
+
+        if (sendMessage.readyState == 4 && sendMessage.status == 200) {
+          e.target.reset();
+         
+        };
+      });
+    </script>
+  </div>
+</div>

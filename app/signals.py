@@ -4,6 +4,7 @@ from .models import Notification
 from channels.layers import get_channel_layer
 import asyncio
 from accounts.models import Account
+from chat.models import Room
 
 
 @receiver(post_save, sender=Notification)
@@ -19,4 +20,3 @@ def notificationSend(sender, instance, created, **kwargs):
             'type': 'send_notification',
             'notification': obj.text,
         }))
-        print(group_name, obj.user)

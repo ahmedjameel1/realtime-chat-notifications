@@ -6,7 +6,8 @@ from .models import Notification
 
 def index(request):
     try:
-        notifications = Notification.objects.filter(user=request.user)
+        notifications = Notification.objects.filter(
+            user=request.user).order_by('-created_at')
     except:
         notifications = None
     username = request.user.username
